@@ -9,7 +9,7 @@
 - [Examples](#examples)
 <!-- /toc -->
 
-The package `puddle` is an abstraction of a worker pool that may fit most many cases.
+The package `puddle` is an abstraction of a worker pool that may fit most many cases. At least, it fits mine and I don't have to remember how channes and waitgroups work.
 
 ## Pool creation
 
