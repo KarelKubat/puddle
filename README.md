@@ -1,11 +1,6 @@
 # puddle: A basic worker pool for Go
 
 <!-- toc -->
-- [Pool creation](#pool-creation)
-- [Starting work](#starting-work)
-- [Waiting for termination](#waiting-for-termination)
-  - [Collecting results](#collecting-results)
-  - [Discarding results](#discarding-results)
 <!-- /toc -->
 
 The package `puddle` is an abstraction of a worker pool that may fit most many cases.
@@ -92,6 +87,9 @@ for v := range p.Out() {
 FWIW, `p.Wait()` can be called to wait until all workers have finished. Here is a trivial example:
 
 ```go
+// A worker must return something, even if it's empty.
+type ret struct{}
+
 // Wrapper for fmt.Printf.
 func myPrintf(args puddle.Args) any {
 	if len(args) > 1 {
