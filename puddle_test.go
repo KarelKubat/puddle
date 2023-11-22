@@ -25,6 +25,9 @@ func workerForOut(a Args) any {
 var count atomic.Int32
 
 func workerForWait(a Args) any {
+	if len(a) != 0 {
+		panic(fmt.Sprintf("worker got %d args, need 0", len(a)))
+	}
 	fmt.Printf("counter increased to %v", count.Add(1))
 	return struct{}{}
 }
@@ -50,7 +53,7 @@ func TestOut(t *testing.T) {
 func TestWait(t *testing.T) {
 	p := New(Opts{Size: 1})
 	for i := 0; i < MAX; i++ {
-		p.Work(workerForWait, Args{})
+		p.Work(workerForWait, nil)
 	}
 	p.Wait()
 	if count.Load() != MAX {
