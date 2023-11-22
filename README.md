@@ -15,10 +15,10 @@ The package `puddle` is an abstraction of a worker pool that may fit most many c
 ```go
 import "github.com/KarelKubat/puddle"
 
-// When workers in the pool can run in parallel
+// When all workers in the pool can run in parallel
 p := puddle.New()
 
-// When there can be at most 20 parallel executions at one time
+// When there may be at most 20 parallel executions at one time
 p := puddle.New(puddle.Opts{Size: 20})
 ```
 
@@ -79,10 +79,10 @@ Given the example above we would use `p.Out()` and inspect what happened. The ou
 for v := range p.Out() {
 	o := v.(outcome)
 	if o.err == nil {
-		fmt.Printf("worker returned status %d\n", o.url, o.res.StatusCode)
+		fmt.Printf("worker returned status %d\n", o.res.StatusCode)
         // Presumably here we'd do something with o.res.Body
 	} else {
-		fmt.Printf("worker returned error %v\n", o.url, o.err)
+		fmt.Printf("worker returned error %v\n", o.err)
 	}
 }
 ```
@@ -118,3 +118,7 @@ func main() {
 	p.Wait()
 }
 ```
+
+## Examples
+
+You'll find working examples under `test/` in this distribution.
