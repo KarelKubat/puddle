@@ -49,6 +49,9 @@ func (wp *Pool) openChannel() {
 
 	mu.Lock()
 	defer mu.Unlock()
+	if wp.open {
+		return
+	}
 	if wp.size > 0 {
 		wp.ch = make(chan any, wp.size)
 	} else {
