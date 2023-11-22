@@ -8,7 +8,6 @@ import (
 )
 
 type outcome struct {
-	url string         // what we requested
 	err error          // why http.Get() failed
 	res *http.Response // what http.Get() returned otherwise
 }
@@ -17,7 +16,6 @@ func httpGet(args puddle.Args) any {
 	url := args[0].(string)
 	r, e := http.Get(url)
 	return outcome{
-		url: url,
 		res: r,
 		err: e,
 	}
@@ -37,9 +35,9 @@ func main() {
 	for v := range p.Out() {
 		o := v.(outcome)
 		if o.err == nil {
-			fmt.Printf("get %q returned status %d\n", o.url, o.res.StatusCode)
+			fmt.Printf("get %q returned status %d\n", o.res.Request.URL, o.res.StatusCode)
 		} else {
-			fmt.Printf("get %q returned error %v\n", o.url, o.err)
+			fmt.Printf("get %q returned error %v\n", o.res.Request.URL, o.err)
 		}
 	}
 }

@@ -18,7 +18,8 @@ func myPrintf(args puddle.Args) any {
 	return ret{}
 }
 
-// "puddle" example using "ret" and "myPrintf.
+// Puddle example using ret and myPrintf. Since we don't want to collect
+// the results, we can p.Wait() which just waits.
 func main() {
 	p := puddle.New()
 
