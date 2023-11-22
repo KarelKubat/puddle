@@ -6,6 +6,7 @@
 - [Waiting for termination](#waiting-for-termination)
   - [Collecting results](#collecting-results)
   - [Discarding results](#discarding-results)
+- [Examples](#examples)
 <!-- /toc -->
 
 The package `puddle` is an abstraction of a worker pool that may fit most many cases.
