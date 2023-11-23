@@ -123,7 +123,7 @@ func main() {
 
 The outcome of one pool can of course start workers in another pool. The below code has a pool `formatter` that spits out strings, and a pool `outputter` that displays them.
 
-- Given that `outputter` workers emit strings, waiting for the `formatter` needs to collect results. Hence `formatter.Out()` is applied.
+- Given that `formatter` workers emit strings, waiting for the `formatter` needs to collect results. Hence `formatter.Out()` is applied.
 - Waiting for the `outputter` can be just `outputter.Wait()` since there are no results to collect.
 - The code also shows how a lambda function can be a wrapper for `.Work()`.
 
