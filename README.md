@@ -6,6 +6,7 @@
 - [Waiting for termination](#waiting-for-termination)
   - [Collecting results](#collecting-results)
   - [Discarding results](#discarding-results)
+- [Chaining](#chaining)
 - [Examples](#examples)
 <!-- /toc -->
 
@@ -74,7 +75,7 @@ There are two ways to wait until the pool's workers finish their work:
 
 ### Collecting results
 
-Given the example above we would use `p.Out()` and inspect what happened. The outcome is returned as an anonymous `any`, the caller must convert it to whatever the worker returns (in this case an `outcome`).
+Given the above example about `http.Get()` we would use `p.Out()` and inspect what happened. The outcome is returned as an anonymous `any`, the caller must convert it to whatever the worker returns (in this case an `outcome`).
 
 ```go
 for v := range p.Out() {
@@ -93,20 +94,18 @@ for v := range p.Out() {
 FWIW, `p.Wait()` can be called to wait until all workers have finished. Here is a trivial example:
 
 ```go
-// A worker must return something, even if it's empty.
-type ret struct{}
-
 // Wrapper for fmt.Printf.
 func myPrintf(args puddle.Args) any {
 	if len(args) > 1 {
 		// Ensure that args[0] can be referenced.
 		fmt.Printf(args[0].(string), args[1:]...)
 	}
-	return ret{}
+	// There must be a return value, even when no one will inspect it.
+	return nil
 }
 
-// Puddle example using ret and myPrintf. Since we don't want to collect
-// the results, we can p.Wait() which just waits.
+// Puddle example using myPrintf. Since we don't want to collect the
+// results, we can p.Wait() which just blocks until all workers finish.
 func main() {
 	p := puddle.New()
 
@@ -117,6 +116,38 @@ func main() {
 		p.Work(myPrintf, puddle.Args{"%s potato\n", s})
 	}
 	p.Wait()
+}
+```
+
+## Chaining
+
+The outcome of one pool can of course start workers in another pool. The below code has a pool `formatter` that spits out strings, and a pool `outputter` that displays them.
+
+- Given that `outputter` workers emit strings, waiting for the `formatter` needs to collect results. Hence `formatter.Out()` is applied.
+- Waiting for the `outputter` can be just `outputter.Wait()` since there are no results to collect.
+- The code also shows how a lambda function can be used as a wraper for `.Work()`.
+
+```go
+func main() {
+	formatter := puddle.New()
+	for _, s := range []string{
+		"one", "two", "three", "four", "five",
+		"six", "seven", "eight", "nine", "ten",
+	} {
+		formatter.Work(func(a puddle.Args) any {
+			return fmt.Sprintf(a[0].(string), a[1:]...)
+		}, puddle.Args{"%s potato", s})
+	}
+
+	outputter := puddle.New()
+	for v := range formatter.Out() {
+		s := v.(string)
+		outputter.Work(func(a puddle.Args) any {
+			fmt.Println(a[0].(string))
+			return nil
+		}, puddle.Args{s})
+	}
+	outputter.Wait()
 }
 ```
 
