@@ -10,7 +10,7 @@
 - [Examples](#examples)
 <!-- /toc -->
 
-The package `puddle` is an abstraction of a worker pool that may fit most many cases. At least, it fits mine and I don't have to remember how channes and waitgroups work.
+The package `puddle` is an abstraction of a worker pool that may fit most many cases. At least, it fits mine and I don't have to remember how channels and waitgroups work and what to wrap in a go-routine and what not.
 
 ## Pool creation
 
@@ -21,7 +21,7 @@ import "github.com/KarelKubat/puddle"
 p := puddle.New()
 
 // When there may be at most 20 parallel executions at one time
-p := puddle.New(puddle.Opts{Size: 20})
+p := puddle.New(puddle.WithSize(20))
 ```
 
 ## Starting work

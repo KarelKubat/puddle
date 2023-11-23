@@ -20,7 +20,7 @@ type Pool struct {
 	open bool
 }
 
-// Opts are options for New.
+// Opts are options for New. They can be passed-in directly, or using the With... function(s).
 type Opts struct {
 	Size int
 }
@@ -32,7 +32,7 @@ New returns a new Pool. Examples:
 	pl := puddle.New()
 
 	// Limit the workers to 10 at a time.
-	pl := puddle.New(puddle.Opts{Size: 10})
+	pl := puddle.New(puddle.WithSize(10))
 */
 func New(opts ...Opts) *Pool {
 	wp := &Pool{}
@@ -41,6 +41,11 @@ func New(opts ...Opts) *Pool {
 	}
 	wp.openChannel()
 	return wp
+}
+
+// WithSize emits an Opts struct to have New set the worker pool size.
+func WithSize(sz int) Opts {
+	return Opts{Size: sz}
 }
 
 // openChannel is a helper.

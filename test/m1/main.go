@@ -19,7 +19,7 @@ func myPrintf(args puddle.Args) any {
 // Puddle example using myPrintf. Since we don't want to collect the
 // results, we can p.Wait() which just blocks until all workers finish.
 func main() {
-	p := puddle.New()
+	p := puddle.New(puddle.WithSize(4))
 
 	for _, s := range []string{
 		"one", "two", "three", "four", "five",
