@@ -60,3 +60,31 @@ func TestWait(t *testing.T) {
 		t.Errorf("during TestWait: counter reached %d, want %d", count.Load(), MAX)
 	}
 }
+
+func TestNewSizing(t *testing.T) {
+	for _, test := range []struct {
+		desc   string
+		p      *Pool
+		wantSz int
+	}{
+		{
+			desc:   "New()",
+			p:      New(),
+			wantSz: 0,
+		},
+		{
+			desc:   "New(Opts{Size:20})",
+			p:      New(Opts{Size: 20}),
+			wantSz: 20,
+		},
+		{
+			desc:   "New(WithSize(30))",
+			p:      New(WithSize(30)),
+			wantSz: 30,
+		},
+	} {
+		if gotSz := test.p.size; gotSz != test.wantSz {
+			t.Errorf("%v: size=%v, want %v", test.desc, gotSz, test.wantSz)
+		}
+	}
+}
