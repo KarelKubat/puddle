@@ -81,7 +81,7 @@ for v := range p.Out() {
 	o := v.(outcome)
 	if o.err == nil {
 		fmt.Printf("worker returned status %d\n", o.res.StatusCode)
-        // Presumably here we'd do something with o.res.Body
+		// Presumably here we'd do something with o.res.Body
 	} else {
 		fmt.Printf("worker returned error %v\n", o.err)
 	}
