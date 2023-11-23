@@ -6,20 +6,18 @@ import (
 	"github.com/KarelKubat/puddle"
 )
 
-// A worker must return something, even if it's empty.
-type ret struct{}
-
 // Wrapper for fmt.Printf.
 func myPrintf(args puddle.Args) any {
 	if len(args) > 1 {
 		// Ensure that args[0] can be referenced.
 		fmt.Printf(args[0].(string), args[1:]...)
 	}
-	return ret{}
+	// There must be a return value, even when no one will inspect it.
+	return nil
 }
 
-// Puddle example using ret and myPrintf. Since we don't want to collect
-// the results, we can p.Wait() which just waits.
+// Puddle example using myPrintf. Since we don't want to collect the
+// results, we can p.Wait() which just blocks until all workers finish.
 func main() {
 	p := puddle.New()
 
