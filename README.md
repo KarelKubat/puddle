@@ -62,7 +62,7 @@ urls := []string{
     // etc.
 }
 for _, u := range urls {
-    p.Add(httpGet, puddle.Args{u})
+    p.Work(httpGet, puddle.Args{u})
 }
 ```
 
