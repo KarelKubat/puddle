@@ -5,6 +5,7 @@
 - [Starting work](#starting-work)
 - [Waiting for termination](#waiting-for-termination)
   - [Collecting results](#collecting-results)
+  - [Workers that return an error, or <code>nil</code>](#workers-that-return-an-error-or-nil)
   - [Discarding results](#discarding-results)
 - [Chaining](#chaining)
 - [Examples](#examples)
@@ -44,13 +45,13 @@ type outcome struct {
     err  error
 }
 func httpGet(args puddle.Args) any {
-	// args is a list of `any`, we take the first and unwrap it into a string
+    // args is a list of `any`, we take the first and unwrap it into a string
     url := args[0].(string)
 
-	// Call the existing function
+    // Call the existing function
     r, e := http.Get(url)
 
-	// Return the outcome as one value
+    // Return the outcome as one value
     return outcome{
         res: r,
         err: e,
@@ -85,13 +86,13 @@ Given the above example about `http.Get()` we would use `p.Out()` and inspect wh
 
 ```go
 for v := range p.Out() {
-	o := v.(outcome)
-	if o.err == nil {
-		fmt.Printf("worker returned status %d\n", o.res.StatusCode)
-		// Presumably here we'd want to do something with o.res.Body
-	} else {
-		fmt.Printf("worker returned error %v\n", o.err)
-	}
+    o := v.(outcome)
+    if o.err == nil {
+        fmt.Printf("worker returned status %d\n", o.res.StatusCode)
+        // Presumably here we'd want to do something with o.res.Body
+    } else {
+        fmt.Printf("worker returned error %v\n", o.err)
+    }
 }
 ```
 
@@ -100,34 +101,34 @@ for v := range p.Out() {
 You can of course have workers that return an error condition or just `nil`, such as the following worker, which pings a host, and if that fails returns an error (see also in the distribution `test/m5/`):
 
 ```go
-	worker := func(args puddle.Args) any {
-		hostname := args[0].(string)
-		cmd := exec.Command("ping", hostname)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("%q: %v", hostname, err)
-		}
-		return nil
-	}
+    worker := func(args puddle.Args) any {
+        hostname := args[0].(string)
+        cmd := exec.Command("ping", hostname)
+        if err := cmd.Run(); err != nil {
+            return fmt.Errorf("%q: %v", hostname, err)
+        }
+        return nil
+    }
 ```
 
 When waiting for a set of workers, the caller of `puddle.Out()` may simply check that whether the returned value is `nil` or not:
 
 ```go
-	hostnames := []string{
-		"google.com",
-		"example.com",
-		"non-existent.whatever",
-	}
+    hostnames := []string{
+        "google.com",
+        "example.com",
+        "non-existent.whatever",
+    }
 
-	p := puddle.New()
-	for _, h := range hostnames {
-		p.Work(worker, puddle.Args{h})
-	}
-	for v := range p.Out() {
-		if v != nil {
-			fmt.Println(v)
-		}
-	}
+    p := puddle.New()
+    for _, h := range hostnames {
+        p.Work(worker, puddle.Args{h})
+    }
+    for v := range p.Out() {
+        if v != nil {
+            fmt.Println(v)
+        }
+    }
 ```
 
 ### Discarding results
@@ -170,25 +171,25 @@ The outcome of one pool can of course start workers in another pool. The below c
 
 ```go
 func main() {
-	formatter := puddle.New()
-	for _, s := range []string{
-		"one", "two", "three", "four", "five",
-		"six", "seven", "eight", "nine", "ten",
-	} {
-		formatter.Work(func(a puddle.Args) any {
-			return fmt.Sprintf(a[0].(string), a[1:]...)
-		}, puddle.Args{"%s potato", s})
-	}
+    formatter := puddle.New()
+    for _, s := range []string{
+        "one", "two", "three", "four", "five",
+        "six", "seven", "eight", "nine", "ten",
+    } {
+        formatter.Work(func(a puddle.Args) any {
+            return fmt.Sprintf(a[0].(string), a[1:]...)
+        }, puddle.Args{"%s potato", s})
+    }
 
-	outputter := puddle.New()
-	for v := range formatter.Out() {
-		s := v.(string)
-		outputter.Work(func(a puddle.Args) any {
-			fmt.Println(a[0].(string))
-			return nil
-		}, puddle.Args{s})
-	}
-	outputter.Wait()
+    outputter := puddle.New()
+    for v := range formatter.Out() {
+        s := v.(string)
+        outputter.Work(func(a puddle.Args) any {
+            fmt.Println(a[0].(string))
+            return nil
+        }, puddle.Args{s})
+    }
+    outputter.Wait()
 }
 ```
 
