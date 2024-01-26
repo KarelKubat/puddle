@@ -29,9 +29,12 @@ p := puddle.New(puddle.WithSize(20))
 The pool accepts `puddle.Worker` type functions. Such functions:
 
 - Accept as arguments a list of `any` (this is the type `puddle.Args`)
-- Return one value, again `any`.
+- Return one value, again `any`. There must be some return value, even if it's just `nil`, an `error` or a `struct{}`.
 
-Usually you'll want to coerce existing functions into the `puddle.Worker` format. This can be easily done by (a) wrapping the returns into one `struct`, (b) wrapping the existing function to accept `puddle.Args` as the argument and to return one value, that struct.
+Often you'll want your `puddle.Worker`s to internally use a function that returns multiple things. The typical Go function returns some value, and an error. Coercing such functions into the `puddle.Worker` format is easy: it can be easily done by:
+
+- 1. Wrapping the returns into one `struct` that is returned by the worker;
+- 2. Wrapping the existing function to accept `puddle.Args` as the argument and to return that one `struct` value.
 
 For example, `http.Get()` accepts a string (the URL) and returns a `*http.Response` and an error. A wrapper is:
 
@@ -41,16 +44,19 @@ type outcome struct {
     err  error
 }
 func httpGet(args puddle.Args) any {
+	// args is a list of `any`, we take the first and unwrap it into a string
     url := args[0].(string)
+
+	// Call the existing function
     r, e := http.Get(url)
+
+	// Return the outcome as one value
     return outcome{
         res: r,
         err: e,
     }
 }
 ```
-
-A `puddle.Worker` **must** return something, even if it's only a `struct{}`.
 
 Adding workers to the pool and starting them is done using `p.Work()` which has as arguments (a) the function, (b) what the function will receive once it runs, in the format `puddle.Args`. For example:
 
@@ -82,11 +88,46 @@ for v := range p.Out() {
 	o := v.(outcome)
 	if o.err == nil {
 		fmt.Printf("worker returned status %d\n", o.res.StatusCode)
-		// Presumably here we'd do something with o.res.Body
+		// Presumably here we'd want to do something with o.res.Body
 	} else {
 		fmt.Printf("worker returned error %v\n", o.err)
 	}
 }
+```
+
+### Workers that return an error, or `nil`
+
+You can of course have workers that return an error condition or just `nil`, such as the following worker, which pings a host, and if that fails returns an error (see also in the distribution `test/m5/`):
+
+```go
+	worker := func(args puddle.Args) any {
+		hostname := args[0].(string)
+		cmd := exec.Command("ping", hostname)
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("%q: %v", hostname, err)
+		}
+		return nil
+	}
+```
+
+When waiting for a set of workers, the caller of `puddle.Out()` may simply check that whether the returned value is `nil` or not:
+
+```go
+	hostnames := []string{
+		"google.com",
+		"example.com",
+		"non-existent.whatever",
+	}
+
+	p := puddle.New()
+	for _, h := range hostnames {
+		p.Work(worker, puddle.Args{h})
+	}
+	for v := range p.Out() {
+		if v != nil {
+			fmt.Println(v)
+		}
+	}
 ```
 
 ### Discarding results
@@ -96,26 +137,26 @@ FWIW, `p.Wait()` can be called to wait until all workers have finished. Here is 
 ```go
 // Wrapper for fmt.Printf.
 func myPrintf(args puddle.Args) any {
-	if len(args) > 1 {
-		// Ensure that args[0] can be referenced.
-		fmt.Printf(args[0].(string), args[1:]...)
-	}
-	// There must be a return value, even when no one will inspect it.
-	return nil
+    if len(args) > 1 {
+    	// Ensure that args[0] can be referenced.
+    	fmt.Printf(args[0].(string), args[1:]...)
+    }
+    // There must be a return value, even when no one will inspect it.
+    return nil
 }
 
 // Puddle example using myPrintf. Since we don't want to collect the
 // results, we can p.Wait() which just blocks until all workers finish.
 func main() {
-	p := puddle.New()
+    p := puddle.New()
 
-	for _, s := range []string{
-		"one", "two", "three", "four", "five",
-		"six", "seven", "eight", "nine", "ten",
-	} {
-		p.Work(myPrintf, puddle.Args{"%s potato\n", s})
-	}
-	p.Wait()
+    for _, s := range []string{
+    	"one", "two", "three", "four", "five",
+    	"six", "seven", "eight", "nine", "ten",
+    } {
+    	p.Work(myPrintf, puddle.Args{"%s potato\n", s})
+    }
+    p.Wait()
 }
 ```
 
